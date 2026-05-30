@@ -19,7 +19,20 @@ def app_dir():
     return os.path.dirname(os.path.abspath(__file__))
 
 
-def find_db_dir():
+def user_data_dir():
+    """Pasta gravável para bancos adicionados e bancos copiados do app."""
+    if sys.platform == "darwin":
+        base = os.path.expanduser(os.path.join("~", "Library", "Application Support", APP_NAME))
+    elif os.name == "nt":
+        base = os.path.join(os.environ.get("APPDATA", os.path.expanduser("~")), APP_NAME)
+    else:
+        base = os.path.join(os.path.expanduser("~"), f".{APP_NAME.replace(' ', '_').lower()}")
+    os.makedirs(base, exist_ok=True)
+    return base
+
+
+def bundled_db_dirs():
+    """Possíveis locais onde o PyInstaller/GitHub Actions coloca a pasta databases."""
     candidates = []
     if getattr(sys, "frozen", False):
         exe_dir = os.path.dirname(sys.executable)
@@ -29,18 +42,41 @@ def find_db_dir():
             candidates.append(os.path.abspath(os.path.join(exe_dir, "..", "..", "..", "databases")))
     else:
         candidates.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "databases"))
+    return candidates
 
-    for path in candidates:
-        if os.path.isdir(path) and any(f.lower().endswith((".sqlite", ".db")) for f in os.listdir(path)):
-            return path
 
-    fallback = candidates[0]
-    os.makedirs(fallback, exist_ok=True)
-    return fallback
+def valid_db_file(filename):
+    name = filename.lower()
+    return (
+        name.endswith((".sqlite", ".db"))
+        and not name.endswith((".sqlite-shm", ".sqlite-wal", ".db-shm", ".db-wal"))
+    )
+
+
+def prepare_db_dir():
+    """Usa uma pasta gravável e copia bancos iniciais para ela sem substituir bancos existentes."""
+    db_dir = os.path.join(user_data_dir(), "databases")
+    os.makedirs(db_dir, exist_ok=True)
+
+    for source_dir in bundled_db_dirs():
+        if not os.path.isdir(source_dir):
+            continue
+        for filename in os.listdir(source_dir):
+            if not valid_db_file(filename):
+                continue
+            source_path = os.path.join(source_dir, filename)
+            dest_path = os.path.join(db_dir, filename)
+            if not os.path.exists(dest_path):
+                try:
+                    shutil.copy2(source_path, dest_path)
+                except Exception:
+                    pass
+
+    return db_dir
 
 
 BASE_DIR = app_dir()
-DB_DIR = find_db_dir()
+DB_DIR = prepare_db_dir()
 
 COLUMNS = [
     ("id", "ID"),
@@ -60,11 +96,7 @@ ALL_FIELDS = [
 
 
 def list_databases():
-    return sorted([
-        f for f in os.listdir(DB_DIR)
-        if f.lower().endswith((".sqlite", ".db"))
-        and not f.lower().endswith((".sqlite-shm", ".sqlite-wal", ".db-shm", ".db-wal"))
-    ])
+    return sorted([f for f in os.listdir(DB_DIR) if valid_db_file(f)])
 
 
 def unique_dest_name(filename):
@@ -78,7 +110,15 @@ def unique_dest_name(filename):
 
 
 def get_conn(dbname):
-    return sqlite3.connect(os.path.join(DB_DIR, dbname))
+    path = os.path.join(DB_DIR, dbname)
+    try:
+        conn = sqlite3.connect(path)
+        conn.execute("PRAGMA query_only = ON")
+        return conn
+    except sqlite3.Error:
+        # Fallback para casos em que o macOS bloqueia escrita/lock no arquivo.
+        uri = "file:" + os.path.abspath(path).replace(" ", "%20") + "?mode=ro"
+        return sqlite3.connect(uri, uri=True)
 
 
 def safe_get(row, key):
