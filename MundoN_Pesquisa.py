@@ -195,11 +195,11 @@ class MundoNApp(tk.Tk):
         self.detail_title = ttk.Label(detail_frame, text="Clique em um resultado para abrir", style="CardTitle.TLabel", wraplength=680)
         self.detail_title.pack(anchor="w", pady=(0, 10))
 
-        self.meta_text = tk.Text(detail_frame, height=6, wrap="word", font=("Arial", 10), bg="#f8fafc", relief="flat", padx=10, pady=8)
+                self.meta_text = tk.Text(detail_frame, height=6, wrap="word", font=("Arial", 10), bg="#f8fafc", fg="#111827", insertbackground="#111827", selectbackground="#c7d2fe", selectforeground="#111827", relief="flat", padx=10, pady=8)
         self.meta_text.pack(fill="x", pady=(0, 10))
         self.meta_text.configure(state="disabled")
 
-        self.content_text = tk.Text(detail_frame, wrap="word", font=("Arial", 11), bg="#ffffff", relief="solid", borderwidth=1, padx=12, pady=12)
+        self.content_text = tk.Text(detail_frame, wrap="word", font=("Arial", 11), bg="#ffffff", fg="#111827", insertbackground="#111827", selectbackground="#c7d2fe", selectforeground="#111827", relief="solid", borderwidth=1, padx=12, pady=12)
         self.content_text.pack(fill="both", expand=True)
         self.content_text.configure(state="disabled")
 
