@@ -1,0 +1,48 @@
+MundoN Pesquisa - pacote multibanco
+
+Objetivo
+Este pacote cria um mini software para consultar matérias em bancos SQLite offline.
+Ele permite adicionar novos bancos futuramente sem substituir os bancos antigos.
+
+Arquivos principais
+- MundoN_Pesquisa.py: aplicativo desktop.
+- databases/: pasta onde ficam os bancos SQLite.
+- databases/MundoN_ate_31_12_2022.sqlite: banco inicial.
+- ABRIR_NO_MAC_TESTE.command: abre a versão de teste no Mac, usando Python.
+- build_scripts/GERAR_EXE_WINDOWS.bat: gera o app Windows em formato .exe, dentro de uma pasta de cliente.
+- build_scripts/GERAR_APP_DMG_MAC.command: gera o app Mac em .app e empacota em .dmg.
+
+Como adicionar novos bancos no aplicativo
+1. Abra o aplicativo.
+2. Clique em "Adicionar banco".
+3. Selecione um arquivo .sqlite ou .db.
+4. O sistema copia esse banco para a pasta databases.
+5. Se já existir um banco com o mesmo nome, ele cria uma cópia com sufixo, sem substituir o antigo.
+
+Como consultar vários bancos
+No campo "Banco", escolha:
+- "Todos os bancos" para pesquisar em todos os bancos da pasta databases.
+- Um banco específico para consultar só aquele arquivo.
+
+Como gerar o .exe no Windows
+1. Instale o Python 3 pelo site python.org.
+2. Extraia esta pasta em um computador Windows.
+3. Abra build_scripts.
+4. Dê dois cliques em GERAR_EXE_WINDOWS.bat.
+5. Ao final, envie a pasta MundoN_Pack_Cliente para o cliente.
+
+Como gerar o .dmg no Mac
+1. Instale o Python 3 pelo site python.org.
+2. Extraia esta pasta no Mac.
+3. Abra build_scripts.
+4. Clique com botão direito em GERAR_APP_DMG_MAC.command e escolha Abrir.
+5. Ao final será criado o arquivo MundoN_Pesquisa.dmg.
+
+Observação importante
+O executável Windows deve ser gerado em Windows.
+O DMG do Mac deve ser gerado em Mac.
+Isso evita incompatibilidades entre sistemas.
+
+Atualização futura
+Para complementar o acervo, use o botão "Adicionar banco" dentro do aplicativo.
+O banco novo será copiado para a pasta databases sem apagar os anteriores.
