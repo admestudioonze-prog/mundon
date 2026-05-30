@@ -1,0 +1,77 @@
+name: Build MundoN App
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Baixar repositório
+        uses: actions/checkout@v4
+
+      - name: Instalar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Instalar PyInstaller
+        run: pip install pyinstaller
+
+      - name: Gerar EXE Windows
+        run: |
+          pyinstaller --onedir --windowed --name MundoN_Pesquisa MundoN_Pesquisa.py
+          xcopy databases dist\MundoN_Pesquisa\databases\ /E /I /Y
+
+      - name: Compactar Windows
+        run: Compress-Archive -Path dist\MundoN_Pesquisa\* -DestinationPath MundoN_Pesquisa_Windows.zip
+
+      - name: Enviar artifact Windows
+        uses: actions/upload-artifact@v4
+        with:
+          name: MundoN_Pesquisa_Windows
+          path: MundoN_Pesquisa_Windows.zip
+
+  build-mac:
+    runs-on: macos-latest
+
+    steps:
+      - name: Baixar repositório
+        uses: actions/checkout@v4
+
+      - name: Instalar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Instalar dependências
+        run: |
+          pip install pyinstaller
+          brew install create-dmg
+
+      - name: Gerar APP Mac
+        run: |
+          pyinstaller --onedir --windowed --name MundoN_Pesquisa MundoN_Pesquisa.py
+          mkdir -p dist/MundoN_Pesquisa.app/Contents/Resources/databases
+          cp -R databases/* dist/MundoN_Pesquisa.app/Contents/Resources/databases/ || true
+
+      - name: Gerar DMG
+        run: |
+          create-dmg \
+            --volname "MundoN Pesquisa" \
+            --window-pos 200 120 \
+            --window-size 600 400 \
+            --icon-size 100 \
+            --app-drop-link 400 185 \
+            "MundoN_Pesquisa_Mac.dmg" \
+            "dist/MundoN_Pesquisa.app" || hdiutil create -volname "MundoN Pesquisa" -srcfolder "dist/MundoN_Pesquisa.app" -ov -format UDZO "MundoN_Pesquisa_Mac.dmg"
+
+      - name: Enviar artifact Mac
+        uses: actions/upload-artifact@v4
+        with:
+          name: MundoN_Pesquisa_Mac
+          path: MundoN_Pesquisa_Mac.dmg
