@@ -13,6 +13,8 @@ jobs:
     steps:
       - name: Baixar repositório
         uses: actions/checkout@v4
+        with:
+          lfs: true
 
       - name: Instalar Python
         uses: actions/setup-python@v5
@@ -42,16 +44,16 @@ jobs:
     steps:
       - name: Baixar repositório
         uses: actions/checkout@v4
+        with:
+          lfs: true
 
       - name: Instalar Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      - name: Instalar dependências
-        run: |
-          pip install pyinstaller
-          brew install create-dmg
+      - name: Instalar PyInstaller
+        run: pip install pyinstaller
 
       - name: Gerar APP Mac
         run: |
@@ -59,19 +61,13 @@ jobs:
           mkdir -p dist/MundoN_Pesquisa.app/Contents/Resources/databases
           cp -R databases/* dist/MundoN_Pesquisa.app/Contents/Resources/databases/ || true
 
-      - name: Gerar DMG
+      - name: Compactar APP Mac
         run: |
-          create-dmg \
-            --volname "MundoN Pesquisa" \
-            --window-pos 200 120 \
-            --window-size 600 400 \
-            --icon-size 100 \
-            --app-drop-link 400 185 \
-            "MundoN_Pesquisa_Mac.dmg" \
-            "dist/MundoN_Pesquisa.app" || hdiutil create -volname "MundoN Pesquisa" -srcfolder "dist/MundoN_Pesquisa.app" -ov -format UDZO "MundoN_Pesquisa_Mac.dmg"
+          cd dist
+          zip -r ../MundoN_Pesquisa_Mac.zip MundoN_Pesquisa.app
 
       - name: Enviar artifact Mac
         uses: actions/upload-artifact@v4
         with:
           name: MundoN_Pesquisa_Mac
-          path: MundoN_Pesquisa_Mac.dmg
+          path: MundoN_Pesquisa_Mac.zip
