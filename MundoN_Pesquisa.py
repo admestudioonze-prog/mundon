@@ -19,9 +19,28 @@ def app_dir():
     return os.path.dirname(os.path.abspath(__file__))
 
 
+def find_db_dir():
+    candidates = []
+    if getattr(sys, "frozen", False):
+        exe_dir = os.path.dirname(sys.executable)
+        candidates.append(os.path.join(exe_dir, "databases"))
+        if sys.platform == "darwin":
+            candidates.append(os.path.abspath(os.path.join(exe_dir, "..", "Resources", "databases")))
+            candidates.append(os.path.abspath(os.path.join(exe_dir, "..", "..", "..", "databases")))
+    else:
+        candidates.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "databases"))
+
+    for path in candidates:
+        if os.path.isdir(path) and any(f.lower().endswith((".sqlite", ".db")) for f in os.listdir(path)):
+            return path
+
+    fallback = candidates[0]
+    os.makedirs(fallback, exist_ok=True)
+    return fallback
+
+
 BASE_DIR = app_dir()
-DB_DIR = os.path.join(BASE_DIR, "databases")
-os.makedirs(DB_DIR, exist_ok=True)
+DB_DIR = find_db_dir()
 
 COLUMNS = [
     ("id", "ID"),
@@ -41,7 +60,11 @@ ALL_FIELDS = [
 
 
 def list_databases():
-    return sorted([f for f in os.listdir(DB_DIR) if f.lower().endswith((".sqlite", ".db"))])
+    return sorted([
+        f for f in os.listdir(DB_DIR)
+        if f.lower().endswith((".sqlite", ".db"))
+        and not f.lower().endswith((".sqlite-shm", ".sqlite-wal", ".db-shm", ".db-wal"))
+    ])
 
 
 def unique_dest_name(filename):
@@ -195,7 +218,7 @@ class MundoNApp(tk.Tk):
         self.detail_title = ttk.Label(detail_frame, text="Clique em um resultado para abrir", style="CardTitle.TLabel", wraplength=680)
         self.detail_title.pack(anchor="w", pady=(0, 10))
 
-                self.meta_text = tk.Text(detail_frame, height=6, wrap="word", font=("Arial", 10), bg="#f8fafc", fg="#111827", insertbackground="#111827", selectbackground="#c7d2fe", selectforeground="#111827", relief="flat", padx=10, pady=8)
+        self.meta_text = tk.Text(detail_frame, height=6, wrap="word", font=("Arial", 10), bg="#f8fafc", fg="#111827", insertbackground="#111827", selectbackground="#c7d2fe", selectforeground="#111827", relief="flat", padx=10, pady=8)
         self.meta_text.pack(fill="x", pady=(0, 10))
         self.meta_text.configure(state="disabled")
 
